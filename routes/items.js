@@ -1,67 +1,47 @@
 const express = require('express');
 const router = express.Router();
-const DataStore = require('../DataStore');
+let items = require('../fakeDb');
 
-const store = new DataStore('items.json');
-
-// GET /items - Get all items
+// GET /items
 router.get('/', (req, res) => {
-    const items = store.read();
     res.json(items);
 });
 
-// POST /items - Add new item
+// POST /items
 router.post('/', (req, res) => {
     const { name, price } = req.body;
-    const parsedPrice = parseFloat(price);
-
-    // Validate that price is a number
-    if (isNaN(parsedPrice)) {
-        return res.status(400).json({ error: "Price must be a valid number" });
-    }
-
-    const newItem = { name, price: parsedPrice };
-    store.addItem(newItem);
+    const newItem = { name, price: parseFloat(price) };
+    items.push(newItem);
     res.status(201).json({ added: newItem });
 });
 
-// GET /items/:name - Get single item
+// GET /items/:name
 router.get('/:name', (req, res) => {
-    const foundItem = store.getItemByName(req.params.name);
+    const foundItem = items.find(item => item.name === req.params.name);
     if (!foundItem) {
         return res.status(404).json({ error: "Item not found" });
     }
     res.json(foundItem);
 });
 
-// PATCH /items/:name - Update item
+// PATCH /items/:name
 router.patch('/:name', (req, res) => {
-    const { name, price } = req.body;
-    const parsedPrice = price !== undefined ? parseFloat(price) : undefined;
-
-    // Validate that price is a number if provided
-    if (price !== undefined && isNaN(parsedPrice)) {
-        return res.status(400).json({ error: "Price must be a valid number" });
-    }
-
-    const updatedItem = store.updateItem(req.params.name, {
-        name: name !== undefined ? name : req.params.name,  // Preserve name if not updated
-        price: parsedPrice || undefined
-    });
-
-    if (!updatedItem) {
+    const foundItem = items.find(item => item.name === req.params.name);
+    if (!foundItem) {
         return res.status(404).json({ error: "Item not found" });
     }
-    res.json({ updated: updatedItem });
+    foundItem.name = req.body.name || foundItem.name;
+    foundItem.price = req.body.price !== undefined ? parseFloat(req.body.price) : foundItem.price;
+    res.json({ updated: foundItem });
 });
 
-
-// DELETE /items/:name - Delete item
+// DELETE /items/:name
 router.delete('/:name', (req, res) => {
-    const success = store.deleteItem(req.params.name);
-    if (!success) {
+    const itemIndex = items.findIndex(item => item.name === req.params.name);
+    if (itemIndex === -1) {
         return res.status(404).json({ error: "Item not found" });
     }
+    items.splice(itemIndex, 1);
     res.json({ message: "Deleted" });
 });
 
