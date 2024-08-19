@@ -1,9 +1,9 @@
 const express = require('express');
 const app = express();
-const itemsRoutes = require('routes-items');
+const itemsRoutes = require('./routes/items');
 
 app.use(express.json()); // for parsing application/json
-app.use('/items', itemsRoutes);
+app.use('/items', itemsRoutes); // Use the items router for all /items routes
 
 // 404 handler
 app.use((req, res, next) => {
@@ -18,4 +18,8 @@ app.use((err, req, res, next) => {
     return res.status(status).json({ error: { message, status } });
 });
 
+// Export the app for testing purposes
 module.exports = app;
+
+
+
